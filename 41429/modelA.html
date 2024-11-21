@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Textual Sentiment and Keyword Evolution Visualization</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 20px;
+      }
+      textarea {
+        width: 100%;
+        height: 200px;
+      }
+      #visualizations {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: space-between;
+      }
+      canvas {
+        border: 1px solid #ddd;
+        margin-top: 20px;
+      }
+      #keywordMatrix {
+        margin-top: 20px;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Textual Sentiment and Keyword Evolution Visualization</h1>
+    <textarea
+      id="articleInput"
+      placeholder="Paste your article here..."
+    ></textarea>
+    <button id="analyzeBtn">Analyze</button>
+    <div id="visualizations">
+      <canvas id="sentimentGraph" width="600" height="300"></canvas>
+      <canvas id="keywordChart" width="600" height="300"></canvas>
+    </div>
+    <div id="keywordMatrix"></div>
+    <script>
+      // Simplified sentiment dictionary
+      const sentimentDictionary = {
+        good: 1,
+        great: 1,
+        excellent: 1,
+        happy: 1,
+        love: 1,
+        bad: -1,
+        terrible: -1,
+        awful: -1,
+        sad: -1,
+        hate: -1,
+      };
+
+      // Simplified list of stopwords
+      const stopwords = new Set([
+        "the",
+        "a",
+        "an",
+        "and",
+        "or",
+        "but",
+        "in",
+        "on",
+        "at",
+        "to",
+        "for",
+        "of",
+        "with",
+        "by",
+      ]);
+
+      // Main application logic
+      document
+        .getElementById("analyzeBtn")
+        .addEventListener("click", analyzeArticle);
+
+      function analyzeArticle() {
+        const article = document.getElementById("articleInput").value;
+        const sentences = article.split(/[.!?]+/);
+        const sentiments = analyzeSentiments(sentences);
+        const keywords = extractKeywords(article);
+
+        drawSentimentGraph(sentiments);
+        drawKeywordChart(keywords);
+        createKeywordMatrix(keywords, sentences);
+      }
+
+      function analyzeSentiments(sentences) {
+        return sentences.map((sentence) => {
+          const words = sentence.toLowerCase().split(/\W+/);
+          let sentimentScore = 0;
+          words.forEach((word) => {
+            if (sentimentDictionary[word]) {
+              sentimentScore += sentimentDictionary[word];
+            }
+          });
+          return sentimentScore;
+        });
+      }
+
+      function extractKeywords(text) {
+        const words = text.toLowerCase().split(/\W+/);
+        const keywordCounts = {};
+        words.forEach((word) => {
+          if (!stopwords.has(word) && word.length > 2) {
+            keywordCounts[word] = (keywordCounts[word] || 0) + 1;
+          }
+        });
+        return Object.entries(keywordCounts)
+          .sort((a, b) => b[1] - a[1])
+          .slice(0, 10);
+      }
+
+      function drawSentimentGraph(sentiments) {
+        const canvas = document.getElementById("sentimentGraph");
+        const ctx = canvas.getContext("2d");
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+        const maxSentiment = Math.max(...sentiments.map(Math.abs));
+        const scaleY = canvas.height / (2 * maxSentiment);
+        const scaleX = canvas.width / (sentiments.length - 1);
+
+        ctx.beginPath();
+        ctx.moveTo(0, canvas.height / 2);
+        sentiments.forEach((sentiment, index) => {
+          const x = index * scaleX;
+          const y = canvas.height / 2 - sentiment * scaleY;
+          ctx.lineTo(x, y);
+        });
+        ctx.stroke();
+
+        // Draw x and y axes
+        ctx.beginPath();
+        ctx.moveTo(0, canvas.height / 2);
+        ctx.lineTo(canvas.width, canvas.height / 2);
+        ctx.moveTo(0, 0);
+        ctx.lineTo(0, canvas.height);
+        ctx.stroke();
+      }
+
+      function drawKeywordChart(keywords) {
+        const canvas = document.getElementById("keywordChart");
+        const ctx = canvas.getContext("2d");
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+        const maxCount = Math.max(...keywords.map((k) => k[1]));
+        const barWidth = canvas.width / keywords.length;
+        const scaleY = canvas.height / maxCount;
+
+        keywords.forEach((keyword, index) => {
+          const [word, count] = keyword;
+          const x = index * barWidth;
+          const height = count * scaleY;
+          ctx.fillRect(x, canvas.height - height, barWidth - 2, height);
+
+          // Rotate and draw keyword labels
+          ctx.save();
+          ctx.translate(x + barWidth / 2, canvas.height);
+          ctx.rotate(-Math.PI / 2);
+          ctx.fillText(word, 5, 0);
+          ctx.restore();
+        });
+      }
+
+      function createKeywordMatrix(keywords, sentences) {
+        const matrix = document.getElementById("keywordMatrix");
+        matrix.innerHTML = "";
+
+        const table = document.createElement("table");
+        const headerRow = table.insertRow();
+        headerRow.insertCell().textContent = "Keyword";
+        sentences.forEach((_, index) => {
+          headerRow.insertCell().textContent = `S${index + 1}`;
+        });
+
+        keywords.forEach(([keyword, _]) => {
+          const row = table.insertRow();
+          row.insertCell().textContent = keyword;
+          sentences.forEach((sentence) => {
+            const cell = row.insertCell();
+            if (sentence.toLowerCase().includes(keyword)) {
+              cell.style.backgroundColor =
+                analyzeSentiment(sentence) > 0 ? "lightgreen" : "lightcoral";
+            }
+          });
+        });
+
+        matrix.appendChild(table);
+      }
+
+      function analyzeSentiment(sentence) {
+        const words = sentence.toLowerCase().split(/\W+/);
+        return words.reduce(
+          (score, word) => score + (sentimentDictionary[word] || 0),
+          0
+        );
+      }
+    </script>
+  </body>
+</html>
