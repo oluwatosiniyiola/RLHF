@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Interactive Periodic Table</title>
+    <style>
+      /* Basic styling for the periodic table */
+      .element {
+        width: 50px;
+        height: 50px;
+        border: 1px solid #000;
+        text-align: center;
+        cursor: pointer;
+      }
+      .element:hover {
+        background-color: #e0e0e0;
+      }
+      .info,
+      .edit,
+      .quiz {
+        margin-top: 20px;
+      }
+      .hidden {
+        display: none;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="table"></div>
+    <div id="info" class="info hidden"></div>
+    <button id="editMode">Edit Mode</button>
+    <button id="quizMode" class="hidden">Quiz Mode</button>
+    <div id="editSection" class="edit hidden">
+      <input id="elementName" placeholder="Name" />
+      <input id="atomicNumber" type="number" placeholder="Atomic Number" />
+      <input id="electronConfig" placeholder="Electron Configuration" />
+      <button id="saveEdit">Save</button>
+    </div>
+    <div id="quizSection" class="quiz hidden">
+      <p id="quizQuestion"></p>
+      <input id="quizAnswer" placeholder="Enter element name" />
+      <button id="quizSubmit">Submit</button>
+      <p id="quizFeedback"></p>
+    </div>
+    <script>
+      // JavaScript will go here
+    </script>
+  </body>
+</html>

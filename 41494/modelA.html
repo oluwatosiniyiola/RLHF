@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Interactive Periodic Table</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+      }
+      #periodic-table {
+        display: grid;
+        grid-template-columns: repeat(18, 50px);
+        gap: 2px;
+      }
+      .element {
+        width: 50px;
+        height: 50px;
+        border: 1px solid #ccc;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        cursor: pointer;
+      }
+      #element-info {
+        margin-top: 20px;
+        text-align: center;
+      }
+      #quiz-section {
+        margin-top: 20px;
+        text-align: center;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Interactive Periodic Table</h1>
+    <div id="periodic-table"></div>
+    <div id="element-info"></div>
+    <button id="toggle-edit-mode">Toggle Edit Mode</button>
+    <div id="quiz-section">
+      <button id="start-quiz">Start Quiz</button>
+      <div id="quiz-question" style="display: none"></div>
+      <input type="text" id="quiz-answer" style="display: none" />
+      <button id="submit-answer" style="display: none">Submit Answer</button>
+    </div>
+
+    <script>
+      const periodicTable = document.getElementById("periodic-table");
+      const elementInfo = document.getElementById("element-info");
+      const toggleEditModeBtn = document.getElementById("toggle-edit-mode");
+      const startQuizBtn = document.getElementById("start-quiz");
+      const quizQuestion = document.getElementById("quiz-question");
+      const quizAnswer = document.getElementById("quiz-answer");
+      const submitAnswerBtn = document.getElementById("submit-answer");
+
+      let editMode = false;
+      let quizMode = false;
+      let currentQuizElement = null;
+
+      // Initialize elements data
+      let elements = [
+        {
+          symbol: "H",
+          name: "Hydrogen",
+          atomicNumber: 1,
+          electronConfiguration: "1s1",
+        },
+        {
+          symbol: "He",
+          name: "Helium",
+          atomicNumber: 2,
+          electronConfiguration: "1s2",
+        },
+        // Add more elements here...
+      ];
+
+      // Load elements from local storage if available
+      const storedElements = localStorage.getItem("elements");
+      if (storedElements) {
+        elements = JSON.parse(storedElements);
+      }
+
+      // Function to render the periodic table
+      function renderPeriodicTable() {
+        periodicTable.innerHTML = "";
+        elements.forEach((element) => {
+          const elementDiv = document.createElement("div");
+          elementDiv.classList.add("element");
+          elementDiv.textContent = element.symbol;
+          elementDiv.style.gridColumn = element.atomicNumber;
+          elementDiv.addEventListener("click", () => showElementInfo(element));
+          periodicTable.appendChild(elementDiv);
+        });
+      }
+
+      // Function to show element information
+      function showElementInfo(element) {
+        if (editMode) {
+          const newName = prompt("Enter new name:", element.name);
+          const newAtomicNumber = prompt(
+            "Enter new atomic number:",
+            element.atomicNumber
+          );
+          const newElectronConfiguration = prompt(
+            "Enter new electron configuration:",
+            element.electronConfiguration
+          );
+
+          if (newName && newAtomicNumber && newElectronConfiguration) {
+            element.name = newName;
+            element.atomicNumber = parseInt(newAtomicNumber);
+            element.electronConfiguration = newElectronConfiguration;
+            localStorage.setItem("elements", JSON.stringify(elements));
+            renderPeriodicTable();
+          }
+        } else if (!quizMode) {
+          elementInfo.innerHTML = `
+                    <h2>${element.name}</h2>
+                    <p>Symbol: ${element.symbol}</p>
+                    <p>Atomic Number: ${element.atomicNumber}</p>
+                    <p>Electron Configuration: ${element.electronConfiguration}</p>
+                `;
+        }
+      }
+
+      // Toggle edit mode
+      toggleEditModeBtn.addEventListener("click", () => {
+        editMode = !editMode;
+        toggleEditModeBtn.textContent = editMode
+          ? "Disable Edit Mode"
+          : "Enable Edit Mode";
+      });
+
+      // Start quiz
+      startQuizBtn.addEventListener("click", () => {
+        quizMode = true;
+        currentQuizElement =
+          elements[Math.floor(Math.random() * elements.length)];
+        quizQuestion.textContent = `What is the element with atomic number ${currentQuizElement.atomicNumber}?`;
+        quizQuestion.style.display = "block";
+        quizAnswer.style.display = "block";
+        submitAnswerBtn.style.display = "block";
+        startQuizBtn.style.display = "none";
+      });
+
+      // Submit quiz answer
+      submitAnswerBtn.addEventListener("click", () => {
+        const userAnswer = quizAnswer.value.trim().toLowerCase();
+        const correctAnswer = currentQuizElement.name.toLowerCase();
+
+        if (userAnswer === correctAnswer) {
+          alert("Correct!");
+          updateQuizScore(true);
+        } else {
+          alert(`Incorrect. The correct answer is ${currentQuizElement.name}.`);
+          updateQuizScore(false);
+        }
+
+        quizMode = false;
+        quizQuestion.style.display = "none";
+        quizAnswer.style.display = "none";
+        submitAnswerBtn.style.display = "none";
+        startQuizBtn.style.display = "block";
+        quizAnswer.value = "";
+      });
+
+      // Update quiz score
+      function updateQuizScore(correct) {
+        let quizScores = JSON.parse(localStorage.getItem("quizScores")) || {
+          correct: 0,
+          total: 0,
+        };
+        quizScores.total++;
+        if (correct) quizScores.correct++;
+        localStorage.setItem("quizScores", JSON.stringify(quizScores));
+        alert(`Your current score: ${quizScores.correct}/${quizScores.total}`);
+      }
+
+      // Initial render
+      renderPeriodicTable();
+    </script>
+  </body>
+</html>
